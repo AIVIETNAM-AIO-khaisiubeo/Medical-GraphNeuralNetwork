@@ -1,18 +1,23 @@
-<div align="center">
-
 # Graph Neural Networks — From Scratch
 
-**From graph fundamentals to molecular property prediction**  
-A hands-on, lecture-aligned guide to **GCN · GAT · R-GCN · Edge-aware MPNNs**
+<p align="center">
+  <strong>From graph fundamentals to molecular property prediction</strong><br/>
+  A hands-on, lecture-aligned guide to <strong>GCN · GAT · R-GCN · Edge-aware MPNNs</strong>
+</p>
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-from%20scratch-EE4C2C?logo=pytorch&logoColor=white)
-![Graph libraries](https://img.shields.io/badge/Graph%20libraries-none-334155)
-![Learning](https://img.shields.io/badge/Approach-theory%20%2B%20experiments-0F766E)
+<p align="center">
+  <img alt="Python 3.10+" src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&amp;logoColor=white"/>
+  <img alt="PyTorch from scratch" src="https://img.shields.io/badge/PyTorch-from%20scratch-EE4C2C?logo=pytorch&amp;logoColor=white"/>
+  <img alt="Graph libraries: none" src="https://img.shields.io/badge/Graph%20libraries-none-334155"/>
+  <img alt="Theory and experiments" src="https://img.shields.io/badge/Approach-theory%20%2B%20experiments-0F766E"/>
+</p>
 
-**[Quick start](#quick-start) · [Experiment gallery](#experiment-gallery) · [Learning roadmap](#learning-roadmap) · [Repository structure](#repository-structure)**
-
-</div>
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#experiment-gallery">Experiment gallery</a> ·
+  <a href="#learning-roadmap">Learning roadmap</a> ·
+  <a href="#repository-structure">Repository structure</a>
+</p>
 
 > [!IMPORTANT]
 > **Educational and research-oriented repository.** The experiments reproduce concepts from two lectures by **Vinh Dinh Nguyen** (*Introduction to Graph Neural Network* and *Advanced Graph Neural Network*). Cora is a citation network; ESOL models molecular solubility, a property relevant to molecular research. This project **does not provide patient-level medical diagnosis or clinical validation**.
@@ -60,7 +65,7 @@ flowchart TD
 
 ### One mathematical idea: message passing
 
-For node \(u\), layer \(k\) combines its current representation with messages from the neighborhood \(\mathcal N(u)\):
+For node $u$, layer $k$ combines its current representation with messages from the neighborhood $\mathcal N(u)$:
 
 $$
 h_u^{(k+1)}
@@ -92,10 +97,10 @@ The code evaluates the sparse equivalent using edge indices and scatter-add; it 
 
 | Architecture | Key equation | What changes? |
 |---|---|---|
-| **GCN** | \(\sum_{v\in\mathcal N(u)}\widehat A_{uv}Wh_v\) | Fixed weights from graph degree |
-| **GAT** | \(\sum_{v\in\mathcal N(u)}\alpha_{uv}Wh_v\) | **Learned attention** over neighbors |
-| **R-GCN** | \(\sum_r\sum_{v\in\mathcal N_r(u)}c_{u,r}^{-1}W_rh_v\) | **Separate transform per relation type** |
-| **Edge MPNN** | \(m_{uv}=\operatorname{MLP}([h_u\Vert h_v\Vert e_{uv}])\) | Messages use **multi-dimensional edge features** |
+| **GCN** | $\sum_{v\in\mathcal N(u)}\widehat A_{uv}Wh_v$ | Fixed weights from graph degree |
+| **GAT** | $\sum_{v\in\mathcal N(u)}\alpha_{uv}Wh_v$ | **Learned attention** over neighbors |
+| **R-GCN** | $\sum_r\sum_{v\in\mathcal N_r(u)}c_{u,r}^{-1}W_rh_v$ | **Separate transform per relation type** |
+| **Edge MPNN** | $m_{uv}=\operatorname{MLP}([h_u\Vert h_v\Vert e_{uv}])$ | Messages use **multi-dimensional edge features** |
 
 See [message passing and GCN](docs/02-message-passing-and-gcn.md), [edge features and relations](docs/04-edge-features-and-relations.md), and [attention and graph pooling](docs/05-attention-and-graph-level.md) for full derivations.
 
@@ -238,7 +243,7 @@ The documents are written for readers familiar with **neural networks, deep lear
 |---|---|---|
 | 00 | **[Tóm tắt tiếng Việt](docs/00-tom-tat-tieng-viet.md)** | Tổng quan các khái niệm và kết quả |
 | 01 | [Graph data and tasks](docs/01-graph-data-and-tasks.md) | What are nodes, edges, equivariance, and sparse COO graphs? |
-| 02 | [Message passing and GCN](docs/02-message-passing-and-gcn.md) | How is \(\widehat AHW\) derived and implemented? |
+| 02 | [Message passing and GCN](docs/02-message-passing-and-gcn.md) | How is $\widehat AHW$ derived and implemented? |
 | 03 | [Over-smoothing](docs/03-over-smoothing.md) | Why do deep GNN embeddings become similar? |
 | 04 | [Edge features and relations](docs/04-edge-features-and-relations.md) | When do edge weights and relation-specific parameters help? |
 | 05 | [Attention and graph-level prediction](docs/05-attention-and-graph-level.md) | How does GAT differ from Transformer attention, and how does pooling work? |
@@ -288,7 +293,7 @@ Medical-GraphNeuralNetwork/
 ## Implementation principles
 
 - **No prebuilt GNN layers:** forward passes use `torch.nn` and native PyTorch tensor operations.
-- **Sparse aggregation:** `edge_index` and `index_add_` replace dense `N\times N` aggregation where appropriate.
+- **Sparse aggregation:** `edge_index` and `index_add_` replace dense $N\times N$ aggregation where appropriate.
 - **Reproducibility checks:** [`tests/test_core.py`](tests/test_core.py) verifies graph utilities, sparse versus dense equivalence, and permutation behavior.
 - **Educational comparisons:** experiments illustrate mechanisms; numerical results may vary by environment and training run.
 - **Research boundaries:** results on Cora and ESOL do not imply clinical performance, causal interpretation, or drug suitability.
@@ -301,10 +306,6 @@ Medical-GraphNeuralNetwork/
 4. Chen et al. (2020). [*Measuring and Relieving the Over-smoothing Problem for Graph Neural Networks from the Topological View*](https://arxiv.org/abs/1909.03211).
 5. Gilmer et al. (2017). [*Neural Message Passing for Quantum Chemistry*](https://arxiv.org/abs/1704.01212).
 
-<div align="center">
+<p align="center"><strong>Built to make GNN mathematics inspectable, runnable, and experimentally testable.</strong></p>
 
-**Built to make GNN mathematics inspectable, runnable, and experimentally testable.**
-
-[↑ Back to top](#graph-neural-networks--from-scratch)
-
-</div>
+<p align="center"><a href="#graph-neural-networks--from-scratch">↑ Back to top</a></p>
