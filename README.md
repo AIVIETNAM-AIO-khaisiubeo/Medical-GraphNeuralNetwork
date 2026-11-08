@@ -20,7 +20,7 @@
 </p>
 
 > [!IMPORTANT]
-> **Educational and research-oriented repository.** The experiments reproduce concepts from two lectures by **Vinh Dinh Nguyen** (*Introduction to Graph Neural Network* and *Advanced Graph Neural Network*). Cora is a citation network; ESOL models molecular solubility, a property relevant to molecular research. This project **does not provide patient-level medical diagnosis or clinical validation**.
+> **Educational and research-oriented repository.** The experiments reproduce concepts from two lectures by **AIVN** (*Introduction to Graph Neural Network* and *Advanced Graph Neural Network*). Cora is a citation network; ESOL models molecular solubility, a property relevant to molecular research. This project **does not provide patient-level medical diagnosis or clinical validation**.
 
 ## Overview
 
