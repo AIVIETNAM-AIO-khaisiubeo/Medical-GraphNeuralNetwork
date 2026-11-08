@@ -49,20 +49,6 @@ This repository implements graph representation learning with **plain PyTorch**â
 > [!NOTE]
 > **About RDKit:** It is used only in ESOL to parse SMILES strings into atoms and bonds. The graph representations, batching, neural layers, losses, and training loops are implemented in this repository.
 
-## Architecture at a glance
-
-```mermaid
-flowchart TD
-    A["Graph input: X, edge_index, edge features"] --> B["Message construction"]
-    B --> C["Neighborhood aggregation"]
-    C --> D["Node update / embedding"]
-    D --> E{"Prediction level"}
-    E -->|Node| F["Node logits: Cora topic"]
-    E -->|Graph| G["Sum / mean / max pooling"]
-    G --> H["Molecule regression: ESOL"]
-    I["Edge weights / relation types / attention"] -.-> B
-```
-
 ### One mathematical idea: message passing
 
 For node $u$, layer $k$ combines its current representation with messages from the neighborhood $\mathcal N(u)$:
