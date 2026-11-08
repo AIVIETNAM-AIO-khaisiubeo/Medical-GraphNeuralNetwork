@@ -1,0 +1,14 @@
+# Core — everything the GNN itself needs
+torch>=2.0
+numpy>=1.24
+
+# Experiments: plots, t-SNE / k-means, metrics
+matplotlib>=3.7
+scikit-learn>=1.3
+
+# Only for experiment 06 (ESOL): parses SMILES strings into atoms and bonds.
+# It is a cheminformatics library, NOT a graph-learning library.
+rdkit>=2023.3
+
+# Deliberately NOT used anywhere in this repo:
+#   torch-geometric, dgl, networkx, torch-scatter, spektral

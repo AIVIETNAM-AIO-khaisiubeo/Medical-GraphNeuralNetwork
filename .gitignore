@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+.DS_Store
+
+# datasets are downloaded by scripts/download_data.py
+data/cora/*.content
+data/cora/*.cites
+data/esol/*.csv
+
+# generated figures (kept in the repo by default — delete this line to ignore)
+# results/*.png
