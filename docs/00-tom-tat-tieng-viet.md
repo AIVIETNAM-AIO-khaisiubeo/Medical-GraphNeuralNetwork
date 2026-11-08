@@ -1,4 +1,9 @@
-# 00 — Tóm tắt lý thuyết (tiếng Việt)
+# 00 — Tóm tắt tiếng Việt
+
+> [!NOTE]
+> **Study navigation:** [README](../README.md) · [Repository overview](../README.md#learning-roadmap) · [01 — Graph data and tasks →](01-graph-data-and-tasks.md)
+
+---
 
 Bản tóm tắt toàn bộ lý thuyết của repo, viết cho người đã biết neural network,
 backprop và Transformer. Các file `01`–`05` là bản chi tiết bằng tiếng Anh.
@@ -7,12 +12,12 @@ backprop và Transformer. Các file `01`–`05` là bản chi tiết bằng ti�
 
 ## 1. Vấn đề cốt lõi: tại sao không thể đưa graph vào MLP
 
-Một graph `G = (V, E)` gồm **node** (thực thể) và **edge** (quan hệ). Thông tin
-có thể nằm ở node features `X ∈ R^{N×F}`, edge features, hoặc global.
+Một graph $G=(V,E)$ gồm **node** (thực thể) và **edge** (quan hệ). Thông tin
+có thể nằm ở node features $X\in\mathbb{R}^{N\times F}$, edge features, hoặc global.
 
 Trở ngại lớn nhất là **permutation invariance**. Cách đánh số node là tùy ý:
-đổi thứ tự node ta được `A' = P A Pᵀ` nhưng vẫn là *cùng một graph*. Nếu làm
-phẳng `A` rồi đưa vào MLP, model sẽ coi `N!` ma trận tương đương là `N!` input
+đổi thứ tự node ta được $A'=PAP^\top$ nhưng vẫn là *cùng một graph*. Nếu làm
+phẳng `A` rồi đưa vào MLP, model sẽ coi $N!$ ma trận tương đương là $N!$ input
 khác nhau. Không học nổi.
 
 Ta cần:
@@ -25,15 +30,15 @@ là không gian **non-Euclidean** (không có "bên trái", chỉ có "cách m�
 **Ba loại bài toán:** node-level (phân loại từng node — Cora), edge-level (dự
 đoán liên kết), graph-level (một nhãn cho cả graph — ESOL).
 
-**Biểu diễn thưa:** không dùng ma trận `A` dày `O(N²)` mà dùng danh sách cạnh
-`edge_index` dạng `[2, E]`, tốn `O(E)`. Cora có 2708 node nhưng chỉ ~10.500
+**Biểu diễn thưa:** không dùng ma trận `A` dày $O(N^2)$ mà dùng danh sách cạnh
+`edge_index` dạng `[2, E]`, tốn $O(E)$. Cora có 2708 node nhưng chỉ ~10.500
 cạnh = 0.14% số ô của `A`.
 
 ## 2. Message passing — ý tưởng duy nhất
 
-```
-h_u^(k+1) = UPDATE( h_u^(k),  AGGREGATE({ h_v^(k) : v ∈ N(u) }) )
-```
+$$
+h_u^{(k+1)} = \operatorname{UPDATE}^{(k)}\!\left(h_u^{(k)},\operatorname{AGGREGATE}^{(k)}\left(\{h_v^{(k)}:v\in\mathcal N(u)\}\right)\right)
+$$
 
 Ba bước: lấy hàng xóm → gộp lại (hàm không phụ thuộc thứ tự: sum/mean/max) →
 cập nhật node. Vì định nghĩa trên *tập* hàng xóm nên tự động có tính
@@ -51,30 +56,31 @@ out.index_add_(0, index, src)   # out[i] = Σ messages gửi tới node i
 
 ## 3. GCN: suy ra công thức
 
-Bắt đầu từ `A X` (cộng hàng xóm). Hai lỗi:
+Bắt đầu từ $AX$ (cộng hàng xóm). Hai lỗi:
 
 1. **Node quên chính nó** → thêm self-loop: `Ã = A + I`.
 2. **Độ lớn tỉ lệ với bậc node** → chuẩn hoá. GCN dùng chuẩn hoá đối xứng:
 
-```
-Â = D̃^(-1/2) Ã D̃^(-1/2)          Â_ij = 1 / √(d_i · d_j)
-```
+$$
+\widehat A=\widetilde D^{-1/2}\widetilde A\widetilde D^{-1/2},
+\qquad \widehat A_{ij}=\frac{\widetilde A_{ij}}{\sqrt{\widetilde d_i\,\widetilde d_j}}
+$$
 
-Vì sao đối xứng mà không phải trung bình theo hàng `D̃⁻¹Ã`? Vì (a) tin nhắn từ
-một node "quen biết nhiều" bị chia thêm `√d_j` nên ít đặc trưng hơn, và (b) `Â`
+Vì sao đối xứng mà không phải trung bình theo hàng $\widetilde D^{-1}\widetilde A$? Vì (a) tin nhắn từ
+một node "quen biết nhiều" bị chia thêm `√d_j` nên ít đặc trưng hơn, và (b) $\widehat A$
 đối xứng nên trị riêng thực, nằm trong `[-1,1]`, không nổ cũng không triệt tiêu
 khi nhân nhiều lần.
 
 Layer GCN:  `H^(k+1) = σ( Â H^(k) W^(k) )`, trong đó chỉ `W` là tham số học.
 
-Trong code ta **không** dựng ma trận `N×N`: `Â_ij` là một số vô hướng *trên mỗi
+Trong code ta **không** dựng ma trận $N\times N$: $\widehat A_{ij}$ là một số vô hướng *trên mỗi
 cạnh*, nên phép nhân ma trận thành weighted scatter-add (3 dòng trong
 `gnn/layers.py`). Test `test_gcn_matches_dense` khẳng định kết quả trùng khớp
-với `Â H W` dạng dày.
+với $\widehat AHW$ dạng dày.
 
 **So với CNN:** kernel 3×3 có trọng số *khác nhau cho từng vị trí tương đối*.
 GCN không làm được vậy vì graph không có "góc trên trái" — mọi hàng xóm dùng
-chung `W`, chỉ khác nhau ở số vô hướng `Â_ij`. Phần còn lại của khoá học chính
+chung `W`, chỉ khác nhau ở số vô hướng $\widehat A_{ij}$. Phần còn lại của khoá học chính
 là để lấy lại khả năng đó (GAT, R-GCN, edge features).
 
 ## 4. Over-smoothing — sâu hơn là tệ hơn
@@ -89,9 +95,9 @@ là để lấy lại khả năng đó (GAT, R-GCN, edge features).
 **Nguyên nhân 1:** sau `k` layer, computational graph của các node trùng nhau
 gần hết → đầu vào giống nhau → đầu ra giống nhau.
 
-**Nguyên nhân 2 (bản chất):** bỏ `W` và `σ` đi thì `k` layer chính là `Â^k`.
-`Â` có trị riêng lớn nhất đúng bằng 1 ứng với vector hằng (theo trọng số bậc),
-mọi thành phần khác tắt dần theo `λ_i^k`. Vậy `Â^k X` hội tụ về **một vector
+**Nguyên nhân 2 (bản chất):** bỏ `W` và `σ` đi thì `k` layer chính là $\widehat A^k$.
+$\widehat A$ có trị riêng lớn nhất đúng bằng 1 ứng với vector hằng (theo trọng số bậc),
+mọi thành phần khác tắt dần theo $\lambda_i^k$. Vậy `Â^k X` hội tụ về **một vector
 duy nhất cho mọi node** — mọi thông tin phân biệt bị trung bình hoá mất.
 
 **Hai thước đo:**
@@ -117,15 +123,15 @@ hoàn toàn vô hình. Ba mức độ bổ sung:
 đổi kiến trúc; mọi layer trong repo đã nhận `edge_weight`.
 
 **(b) R-GCN** — mỗi *loại* quan hệ một ma trận riêng:
-```
-h_u' = W_0 h_u + Σ_r (1/|N_u^r|) Σ_{v ∈ N_u^r} W_r h_v
-```
+$$
+h_u' = W_0 h_u+\sum_{r\in\mathcal R}\frac{1}{|\mathcal N_r(u)|}\sum_{v\in\mathcal N_r(u)}W_rh_v
+$$
 
 **(c) Edge features nhiều chiều (MPNN)** — message là MLP trên cả hai đầu mút
 và vector đặc trưng của cạnh:
-```
-m_uv = MLP([h_u ‖ h_v ‖ e_uv])
-```
+$$
+m_{uv}=\operatorname{MLP}\!\left([h_u\Vert h_v\Vert e_{uv}]\right)
+$$
 Dạng này bao trùm cả (a) và (b), nhưng MLP chạy *trên mỗi cạnh* nên đắt nhất.
 
 **Kết quả đo (experiment 05).** Graph tổng hợp: nhãn của node = tín hiệu của
@@ -138,30 +144,32 @@ Dạng này bao trùm cả (a) và (b), nhưng MLP chạy *trên mỗi cạnh* n
 | **R-GCN** | **1.000** |
 | ngẫu nhiên | 0.333 |
 
-Điểm tinh tế: **attention cũng không cứu được**, vì GAT tính `α_ij` từ
+Điểm tinh tế: **attention cũng không cứu được**, vì GAT tính $\alpha_{ij}$ từ
 *feature* của node, mà ở đây hàng xóm nhiễu trông y hệt hàng xóm hữu ích. Thứ
 cần thiết là *loại cạnh* — thứ GAT không nhìn thấy.
 
 ## 6. Attention (GAT)
 
-```
-e_ij = LeakyReLU( aᵀ [W h_i ‖ W h_j] )
-α_ij = softmax trên j ∈ N(i)
-h_i' = σ( Σ_j α_ij W h_j )
-```
+$$
+\begin{aligned}
+e_{ij} &= \operatorname{LeakyReLU}\!\left(a^\top[Wh_i\Vert Wh_j]\right),\\
+\alpha_{ij} &= \frac{\exp(e_{ij})}{\sum_{v\in\mathcal N(i)}\exp(e_{iv})},\\
+h_i' &= \sigma\!\left(\sum_{j\in\mathcal N(i)}\alpha_{ij}Wh_j\right).
+\end{aligned}
+$$
 
 **Nếu bạn biết Transformer:** đây chính là self-attention với hai khác biệt —
 (1) chỉ attend tới **hàng xóm trong graph** thay vì mọi token (ma trận kề đóng
 vai trò **attention mask**), và (2) điểm số là MLP cộng thay vì tích vô hướng
 có scale. Self-attention là trường hợp đặc biệt khi graph đầy đủ. Chi phí cũng
-khác: Transformer `O(N²)`, GAT `O(E)`.
+khác: Transformer $O(N^2)$, GAT $O(E)$.
 
 Chi tiết cài đặt quan trọng: softmax phải tính **theo từng node đích**
 (segment softmax), và phải trừ max từng segment trước khi `exp` để không tràn
 số. Nhớ thêm self-loop trước khi attend.
 
 **Kết quả và một cảnh báo.** Trên Cora: GCN 0.810, GAT 0.818 — thắng rất ít. Soi
-vào hệ số, `α_ij` chia cho trọng số đều `1/degree` nằm trong khoảng 0.98–1.02
+vào hệ số, $\alpha_{ij}$ chia cho trọng số đều `1/degree` nằm trong khoảng 0.98–1.02
 (layer 1): attention học ra **gần như đồng đều**. Không phải bug — tham số
 attention thay đổi 60–130% khi train. Lý do nằm ở dữ liệu: Cora **homophilous**
 rất mạnh, gần như mọi trích dẫn đều nối hai bài cùng chủ đề, nên không có gì để
@@ -171,9 +179,10 @@ khác nhau về mức hữu ích.
 ## 7. Dự đoán mức graph
 
 Cần một **readout** bất biến hoán vị để gộp số node thay đổi thành một vector:
-```
-h_graph = POOL({h_v})        ŷ = MLP(h_graph)
-```
+$$
+h_G=\operatorname{POOL}\!\left(\{h_v:v\in V\}\right),
+\qquad \widehat y=\operatorname{MLP}(h_G)
+$$
 
 Lựa chọn readout không hề nhỏ. Trên ESOL, cùng model, chỉ đổi pooling:
 
@@ -199,9 +208,9 @@ mỗi node thuộc graph nào. Không cạnh nào nối hai graph nên message k
 
 1. **"GCN chưa train đã thấy community" (Deck 2 p.36).** Đo trên 12 seed,
    untrained GCN chỉ đạt **0.529** (ngẫu nhiên là 0.5). Claim này **không
-   reproduce**. Sự thật: cấu trúc nằm trong *toán tử truyền tin* `Â`, không
-   nằm trong random weights. Propagation thuần `h ← Â h` đạt **0.880**, và dấu
-   của **eigenvector thứ 2** của `Â` đạt **0.941** — đó chính là spectral
+   reproduce**. Sự thật: cấu trúc nằm trong *toán tử truyền tin* $\widehat A$, không
+   nằm trong random weights. Propagation thuần $h\leftarrow\widehat Ah$ đạt **0.880**, và dấu
+   của **eigenvector thứ 2** của $\widehat A$ đạt **0.941** — đó chính là spectral
    clustering.
 
 2. **Kiến trúc GCN trong slide mất ~4.5 điểm.** Deck 1 p.71 mô tả "2 MP layer +

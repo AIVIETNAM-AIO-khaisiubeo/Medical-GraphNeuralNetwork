@@ -1,4 +1,9 @@
-# 05 — Attention (GAT), and graph-level prediction
+# 05 — GAT and graph-level prediction
+
+> [!NOTE]
+> **Study navigation:** [← 04 — Edge features and relations](04-edge-features-and-relations.md) · [Repository overview](../README.md#learning-roadmap) · [README](../README.md)
+
+---
 
 *Slides: Deck 2, p.55–71.*
 
@@ -8,14 +13,16 @@
 
 *Deck 2, p.58–59.*
 
-```
-e_ij     = LeakyReLU( aᵀ [ W h_i ‖ W h_j ] )          raw score
-α_ij     = softmax over j ∈ N(i) of e_ij               normalised
-h_i'     = σ( Σ_{j ∈ N(i)} α_ij · W h_j )              aggregate
-```
+$$
+\begin{aligned}
+e_{ij} &= \operatorname{LeakyReLU}\!\left(a^\top[Wh_i\Vert Wh_j]\right),\\
+\alpha_{ij} &= \frac{\exp(e_{ij})}{\sum_{v\in\mathcal N(i)}\exp(e_{iv})},\\
+h_i' &= \sigma\!\left(\sum_{j\in\mathcal N(i)}\alpha_{ij}Wh_j\right).
+\end{aligned}
+$$
 
-GCN's weight `1/√(d_i d_j)` is fixed by the graph's shape. GAT replaces it
-with `α_ij`, computed from the node features — so the model decides, per edge
+GCN's weight $1/\sqrt{d_id_j}$ is fixed by the graph's shape. GAT replaces it
+with $\alpha_{ij}$, computed from the node features — so the model decides, per edge
 and per layer, which neighbours to listen to.
 
 ### If you know Transformers
@@ -25,14 +32,14 @@ This is self-attention, with exactly two differences:
 | | Transformer self-attention | GAT |
 |---|---|---|
 | who attends to whom | every token to every token | only to graph neighbours |
-| score function | scaled dot product `qᵀk/√d` | additive MLP `aᵀ[Wh_i ‖ Wh_j]` |
+| score function | scaled dot product $q^\top k/\sqrt d$ | additive MLP $a^\top[Wh_i\Vert Wh_j]$ |
 | normalisation | softmax over all tokens | softmax over `N(i)` |
 | multi-head | concat, then project | concat (or average on the last layer) |
 
 **The adjacency matrix is the attention mask.** Self-attention is the special
 case of GAT on a fully connected graph; GAT is self-attention with a sparse,
 data-given mask. That also explains the cost difference: Transformer attention
-is `O(N²)`, GAT is `O(E)`.
+is $O(N^2)$, GAT is $O(E)$.
 
 ### The one implementation subtlety
 
@@ -70,7 +77,7 @@ Cora (`experiments/04`):
 | GCN | 0.810 |
 | GAT (8 heads) | **0.818** |
 
-A small win. But inspecting the learned coefficients, `α_ij` divided by the
+A small win. But inspecting the learned coefficients, $\alpha_{ij}$ divided by the
 uniform weight `1/degree`:
 
 | | 5th pct | median | 95th pct |
@@ -103,9 +110,10 @@ Node-level tasks read a prediction off each node. For a graph-level label you
 need to collapse a **variable number** of node embeddings into **one** vector,
 and the function must be permutation-invariant:
 
-```
-h_graph = POOL({ h_v : v ∈ V })        ŷ = MLP(h_graph)
-```
+$$
+h_G=\operatorname{POOL}\!\left(\{h_v:v\in V\}\right),\qquad
+\widehat y=\operatorname{MLP}(h_G)
+$$
 
 The three standard choices, all in `gnn/graph.py`:
 
@@ -161,4 +169,4 @@ layers and training loop are all in this repo.
 
 ---
 
-Back to the [README](../README.md).
+**Finished the guide?** [Back to the README](../README.md).

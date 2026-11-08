@@ -1,4 +1,9 @@
-# 03 — Over-smoothing: why deeper GNNs get worse
+# 03 — Over-smoothing
+
+> [!NOTE]
+> **Study navigation:** [← 02 — Message passing and GCN](02-message-passing-and-gcn.md) · [Repository overview](../README.md#learning-roadmap) · [04 — Edge features and relations →](04-edge-features-and-relations.md)
+
+---
 
 *Slides: Deck 1, p.43–52.*
 
@@ -24,21 +29,21 @@ Two nodes that see the same inputs and apply the same weights produce nearly
 the same output.
 
 **Reason 2 — repeated averaging is a low-pass filter.** *(Deck 1, p.46.)*
-Strip away `W` and `σ`, and `k` layers apply `Â^k`. `Â` is symmetric with
+Strip away `W` and `σ`, and `k` layers apply $\widehat A^k$. $\widehat A$ is symmetric with
 eigenvalues in `[-1, 1]` and a largest eigenvalue of exactly 1, whose
 eigenvector is the degree-weighted constant vector. So
 
-```
-Â^k X  →  (component along the constant vector)   as k → ∞
-```
+$$
+\widehat A^kX\;\longrightarrow\;\text{projection onto the dominant eigenspace}\quad(k\to\infty)
+$$
 
-Every other eigen-component decays like `λ_i^k`. The limit is a graph where
+Every other eigen-component decays like $\lambda_i^k$. The limit is a graph where
 every node holds the same vector, scaled by `√degree`. All information that
 distinguished nodes has been averaged away. Over-smoothing is this limit
 arriving sooner than you expected.
 
 Experiment 01 shows both sides of this on the Karate Club with **no learnable
-parameters at all** — just `h ← Â h`:
+parameters at all** — just $h\leftarrow\widehat Ah$:
 
 | propagation steps `k` | 1 | 2 | 4 | 6 | 8 | 16 | 32 |
 |---|---|---|---|---|---|---|---|
@@ -57,9 +62,10 @@ two diagnostics measure the collapse directly (Chen et al., AAAI 2020).
 **MAD (Mean Average Distance)** — the average cosine distance between node
 embeddings:
 
-```
-D_ij = 1 - cos(h_i, h_j)      MAD = mean over the selected pairs of D_ij
-```
+$$
+D_{ij}=1-\cos(h_i,h_j),\qquad
+\operatorname{MAD}=\frac{1}{|\mathcal P|}\sum_{(i,j)\in\mathcal P}D_{ij}
+$$
 
 High MAD: nodes are distinguishable. MAD → 0: every embedding points the same
 way, and no classifier on top can recover anything. In the table above, MAD at
@@ -68,9 +74,9 @@ way, and no classifier on top can recover anything. In the table above, MAD at
 **MADGap** — the same thing computed on two different pair sets and
 subtracted:
 
-```
-MADGap = MAD(remote pairs) - MAD(neighbouring pairs)
-```
+$$
+\operatorname{MADGap}=\operatorname{MAD}_{\mathrm{remote}}-\operatorname{MAD}_{\mathrm{near}}
+$$
 
 The hypothesis on p.48: messages between nearby nodes carry useful,
 same-class signal; messages from distant nodes are mostly noise. A healthy
@@ -104,12 +110,12 @@ What actually works in practice, in rough order of value:
 
 1. **Don't go deep.** 2 layers is the right answer for Cora, and for most
    node-classification benchmarks. This is the honest headline.
-2. **Residual / skip connections.** `h^(k+1) = h^(k) + σ(Â h^(k) W)` keeps a
+2. **Residual / skip connections.** $h^{(k+1)}=h^{(k)}+\sigma(\widehat Ah^{(k)}W)$ keeps a
    path back to the un-smoothed features, so the constant vector cannot take
    over. This is what deep GNNs (GCNII, DeepGCN) rely on.
 3. **Normalisation between layers** — PairNorm, NodeNorm — explicitly rescale
    embeddings to keep their spread constant, attacking the collapse directly.
-4. **Keep the initial features around.** APPNP and GCNII mix `h^(0)` back in
+4. **Keep the initial features around.** APPNP and GCNII mix $h^{(0)}$ back in
    at every layer, which bounds how far the representation can drift.
 5. **Jumping knowledge.** Concatenate the outputs of all layers, so the
    classifier can pick the hop-count it wants per node.
@@ -119,4 +125,4 @@ adding a residual connection to `GCNLayer` is a two-line change.
 
 ---
 
-Next: [04 — Edge features and relations](04-edge-features-and-relations.md)
+**Continue learning:** [04 — Edge features and relations](04-edge-features-and-relations.md)

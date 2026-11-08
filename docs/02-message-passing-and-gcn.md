@@ -1,4 +1,9 @@
-# 02 — Message passing, and the GCN layer derived
+# 02 — Message passing and GCN
+
+> [!NOTE]
+> **Study navigation:** [← 01 — Graph data and tasks](01-graph-data-and-tasks.md) · [Repository overview](../README.md#learning-roadmap) · [03 — Over-smoothing →](03-over-smoothing.md)
+
+---
 
 *Slides: Deck 1 p.31–56; Deck 2 p.11–31.*
 
@@ -6,9 +11,10 @@
 
 *Deck 1, p.53.* Every GNN layer in this repo is an instance of:
 
-```
-h_u^(k+1) = UPDATE^(k)( h_u^(k),  AGGREGATE^(k)({ h_v^(k) : v ∈ N(u) }) )
-```
+$$
+h_u^{(k+1)} = \operatorname{UPDATE}^{(k)}\!\left(h_u^{(k)},
+\operatorname{AGGREGATE}^{(k)}\!\left(\{h_v^{(k)}:v\in\mathcal N(u)\}\right)\right)
+$$
 
 Three steps, named on Deck 1 p.31:
 
@@ -35,17 +41,17 @@ on a social graph you may already be averaging over half the network. That is
 why GNNs are shallow (2–4 layers) and why [over-smoothing](03-over-smoothing.md)
 is the central failure mode.
 
-## Deriving `Â`
+## Deriving $\widehat A$
 
 Start with the crudest possible aggregation: sum the neighbours. In matrix
-form that is `A X`. Two things are wrong with it (Deck 2, p.22–24):
+form that is $AX$. Two things are wrong with it (Deck 2, p.22–24):
 
-**Problem 1 — the node forgets itself.** Row `i` of `A X` contains only
+**Problem 1 — the node forgets itself.** Row `i` of $AX$ contains only
 neighbours of `i`; `x_i` is absent. Fix: add self-loops,
 
-```
-Ã = A + I
-```
+$$
+\widetilde A=A+I
+$$
 
 **Problem 2 — magnitudes scale with degree.** A node with 50 neighbours
 produces activations ~50× larger than a node with 1. Stack layers and this
@@ -55,9 +61,11 @@ The obvious normalisation is the row-average, `D̃⁻¹ Ã` — "take the mean o
 your neighbours". Deck 2 p.13–14 shows the alternative: scale by rows *and*
 columns, giving the symmetric normalisation GCN actually uses:
 
-```
-Â = D̃^(-1/2) Ã D̃^(-1/2)          Â_ij = 1 / √(d_i · d_j)
-```
+$$
+\widehat A=\widetilde D^{-1/2}\widetilde A\widetilde D^{-1/2},
+\qquad
+\widehat A_{ij}=\frac{\widetilde A_{ij}}{\sqrt{\widetilde d_i\,\widetilde d_j}}
+$$
 
 Why symmetric rather than the row-mean? Two reasons:
 
@@ -65,21 +73,21 @@ Why symmetric rather than the row-mean? Two reasons:
   message from a hub counts as much as one from a rare, specific node. With
   the symmetric form it is divided by `√d_j` too — information from a node
   that talks to everyone is less distinctive.
-- **`Â` stays symmetric**, so its eigenvalues are real and lie in `[-1, 1]`.
+- **$\widehat A$ stays symmetric**, so its eigenvalues are real and lie in `[-1, 1]`.
   Repeated application neither explodes nor vanishes. This is also what makes
   the spectral story in experiment 01 work.
 
 The layer is then:
 
-```
-H^(k+1) = σ( Â H^(k) W^(k) )
-```
+$$
+H^{(k+1)}=\sigma\!\left(\widehat A H^{(k)}W^{(k)}\right)
+$$
 
-`W` is the only learnable part; `Â` is fixed by the graph and computed once.
+`W` is the only learnable part; $\widehat A$ is fixed by the graph and computed once.
 
 ## From matrix form to the code
 
-We never build the `N×N` matrix. `Â_ij = 1/√(d_i d_j)` is a scalar **per
+We never build the $N\times N$ matrix. `Â_ij = 1/√(d_i d_j)` is a scalar **per
 edge**, so the matrix product becomes a weighted scatter-add:
 
 ```python
@@ -99,7 +107,7 @@ class GCNLayer(nn.Module):
 ```
 
 Three lines. `tests/test_core.py::test_gcn_matches_dense` asserts this equals
-the dense `Â H W` to within 1e-5, so the shortcut is exact, not approximate.
+the dense $\widehat AHW$ to within 1e-5, so the shortcut is exact, not approximate.
 
 Note the ordering: project **first** (`self.lin(x)`, one matmul over `N`
 nodes), then gather. Gathering first would copy `F`-dimensional vectors for
@@ -115,16 +123,16 @@ always multiplies the top-left pixel.
 
 A GCN cannot do that, because "top-left" does not exist on a graph. All
 neighbours share the *same* `W`, and the only per-neighbour modulation is the
-scalar `Â_ij` fixed by degrees. In that sense a GCN layer is a convolution
+scalar $\widehat A_{ij}$ fixed by degrees. In that sense a GCN layer is a convolution
 whose kernel has been forced to be isotropic.
 
 That is a real loss of expressive power, and it is what the rest of the
 course recovers:
 
-- [GAT](05-attention-and-graph-level.md) learns a per-edge scalar `α_ij`
+- [GAT](05-attention-and-graph-level.md) learns a per-edge scalar $\alpha_{ij}$
   from the features instead of fixing it from degrees;
 - [R-GCN](04-edge-features-and-relations.md) gives each *relation type* its
-  own `W_r`, which is the closest analogue to "a different weight per
+  own $W_r$, which is the closest analogue to "a different weight per
   position";
 - [`EdgeMPNNLayer`](04-edge-features-and-relations.md) conditions the whole
   message on the edge's feature vector.
@@ -138,8 +146,8 @@ Cora, 140 labelled nodes out of 2708 (`experiments/02`):
 | MLP (no graph) | 0.537 |
 | GCN, 2 layers | **0.810** |
 
-Same features, same hidden width, same budget. The only difference is `Â`.
+Same features, same hidden width, same budget. The only difference is $\widehat A$.
 
 ---
 
-Next: [03 — Over-smoothing](03-over-smoothing.md)
+**Continue learning:** [03 — Over-smoothing](03-over-smoothing.md)

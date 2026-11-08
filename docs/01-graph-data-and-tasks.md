@@ -1,14 +1,19 @@
-# 01 — Graph data, and why a plain neural network can't eat it
+# 01 — Graph data and tasks
+
+> [!NOTE]
+> **Study navigation:** [← 00 — Tóm tắt tiếng Việt](00-tom-tat-tieng-viet.md) · [Repository overview](../README.md#learning-roadmap) · [02 — Message passing and GCN →](02-message-passing-and-gcn.md)
+
+---
 
 *Slides: Deck 1, p.5–29.*
 
 ## What a graph is
 
-A graph `G = (V, E)` is a set of **entities** (nodes) and the **relations**
+A graph $G=(V,E)$ is a set of **entities** (nodes) and the **relations**
 between them (edges). Information can live in three places:
 
-- **node features** `X ∈ R^{N×F}` — one vector per node;
-- **edge features** `E ∈ R^{M×F_e}` — one vector per edge (Deck 2's whole topic);
+- **node features** $X\in\mathbb{R}^{N\times F}$ — one vector per node;
+- **edge features** $\mathbf{E}\in\mathbb{R}^{M\times F_e}$ — one vector per edge (Deck 2's whole topic);
 - **global features** — one vector for the whole graph.
 
 The slides' point in p.8–15 is that a surprising amount of data is a graph:
@@ -40,7 +45,7 @@ layer (Deck 1, p.16–21).
 
 This repo implements **node level** (Cora, experiments 02–05) and **graph
 level** (ESOL, experiment 06). Edge level is the same machinery with a scoring
-function over node-embedding pairs, e.g. `score(u,v) = h_u · h_v`.
+function over node-embedding pairs, e.g. $\mathrm{score}(u,v)=h_u^\top h_v$.
 
 A detail worth internalising: node-level tasks usually have **one big graph**
 and most nodes unlabelled (Deck 1 p.59). Training is *transductive* — the
@@ -53,9 +58,9 @@ the loss is restricted to labelled nodes. Graph-level tasks instead have
 Deck 1 p.25–26 lists the obstacles. The deepest one:
 
 **Permutation invariance.** Node numbering is arbitrary. Relabel the nodes and
-you get a different adjacency matrix `A' = P A Pᵀ` describing *the same
+you get a different adjacency matrix $A'=PAP^\top$ describing *the same
 graph*. An MLP over a flattened `A` would treat those as unrelated inputs.
-With `N` nodes there are `N!` equivalent matrices; you would need the model to
+With `N` nodes there are $N!$ equivalent matrices; you would need the model to
 learn that they all mean the same thing. Hopeless.
 
 What we want instead:
@@ -79,7 +84,7 @@ away".
 
 *Deck 1, p.28–29.*
 
-A dense adjacency matrix costs `O(N²)` memory whatever the graph looks like.
+A dense adjacency matrix costs $O(N^2)$ memory whatever the graph looks like.
 Real graphs are sparse: Cora has 2708 nodes but only ~10,500 directed edges —
 0.14% of the 7.3M entries of `A`. So we store the **edge list** (COO format):
 
@@ -88,7 +93,7 @@ edge_index = tensor([[0, 1, 1, 2],     # source nodes
                      [1, 0, 2, 1]])    # destination nodes
 ```
 
-Shape `[2, E]`, cost `O(E)`. Column `k` is one directed edge
+Shape `[2, E]`, cost $O(E)$. Column `k` is one directed edge
 `edge_index[0,k] → edge_index[1,k]`. Undirected edges are stored as two
 directed ones. This is exactly the format PyTorch Geometric uses, so the habit
 transfers.
@@ -114,4 +119,4 @@ plain PyTorch, it is differentiable, and `scatter_sum` / `scatter_mean` /
 
 ---
 
-Next: [02 — Message passing and GCN](02-message-passing-and-gcn.md)
+**Continue learning:** [02 — Message passing and GCN](02-message-passing-and-gcn.md)
